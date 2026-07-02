@@ -15,6 +15,9 @@ dmidecode = "1.0.1"
 uuid = "1.23.1"
 libnvme = "0.9.0"
 
+[dev-dependencies]
+criterion = "0.8.2"
+
 [profile.release]
 strip = true
 lto = true
@@ -22,3 +25,7 @@ opt-level = 3
 codegen-units = 1
 debug = 0
 panic = "abort"
+
+[[bench]]
+name = "bench"
+harness = false

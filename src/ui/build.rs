@@ -28,9 +28,12 @@ pub fn info_ui(app: &crate::App, area: ratatui::prelude::Rect, buf: &mut ratatui
     let cpubrand = app.sys.cpus()[0].brand();
     let dmi = decode_dmi();
 
-    Paragraph::new(format!("hello? {}", System::host_name().unwrap_or(String::from("linux"))))
-        .block(normal_block(""))
-        .render(hello, buf);
+    Paragraph::new(format!(
+        "hello? {}",
+        System::host_name().unwrap_or(String::from("linux"))
+    ))
+    .block(normal_block(""))
+    .render(hello, buf);
     let dmi = dmi.map(|dmi| ModernDmiDecodedData::from_dmidecoded(&dmi).unwrap());
 
     if let Some(mother) = Motherboard::new() {

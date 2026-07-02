@@ -28,7 +28,7 @@ pub mod client;
 pub mod sys;
 pub mod ui;
 
-const APP_VERSION: &'static str = "1.1.4";
+const APP_VERSION: &str = "1.1.5-pre";
 
 unsafe impl Send for App {}
 pub struct App {
@@ -58,7 +58,7 @@ impl App {
             config: config.clone(),
             service: Serve::new(config.services),
             network: Networks::new_with_refreshed_list(),
-            formats: Format::new(),
+            formats: Format::default(),
             disks: take_sys_disk().unwrap(),
         }
         .once())
@@ -67,9 +67,11 @@ impl App {
     fn once(mut self) -> Self {
         let gpu = get_gpu().unwrap_or_default();
         self.formats.tab = Rc::new(
-            Paragraph::new(format!("Welcome to SeVA {APP_VERSION}!   Press 'Q' to quit SEVA"))
-                .alignment(ratatui::layout::Alignment::Center)
-                .block(normal_block("SEVA Control")),
+            Paragraph::new(format!(
+                "Welcome to SeVA {APP_VERSION}!   Press 'Q' to quit SEVA"
+            ))
+            .alignment(ratatui::layout::Alignment::Center)
+            .block(normal_block("SEVA Control")),
         );
 
         self.formats.os_message_format = format!(
@@ -112,23 +114,17 @@ impl App {
                 self.sys.refresh_memory();
                 self.network.refresh(true);
                 self.merge_process();
-            },
+            }
             ClientState::Trend => {
                 self.sys.refresh_cpu_usage();
                 self.sys.refresh_memory();
                 self.merge_process();
-
-
-            },
+            }
             ClientState::Info => {
                 self.sys.refresh_cpu_all();
-
-            },
+            }
             ClientState::Serve => todo!(),
         }
-        // self.extend.disks.iter_mut().for_each(|disk| {
-        //     disk.refresh();
-        // });
 
         self.sys_line.swap_data.force_queue(
             format!(
@@ -183,7 +179,7 @@ impl App {
         if self.extend.trend_sort == "mem" {
             self.extend
                 .processes
-                .sort_by(|k, v| v.memory.cmp(&k.memory));
+                .sort_by_key(|v| std::cmp::Reverse(v.memory));
         } else {
             self.extend
                 .processes
@@ -222,11 +218,11 @@ impl App {
                 .label(Line::default())
                 .ratio(self.sys.used_swap() as f64 / self.sys.total_swap() as f64),
         );
-            
+
         self.formats.disk_text = self.extend.disks.iter().fold(String::new(), |acc, disk| {
             let total_space = disk.total_space();
             if total_space < 8 * 1024 * 1024 * 1024 {
-                return acc; 
+                return acc;
             }
             acc + &format!(
                 "Disk Name: {:?}\n   file system: {:?}\n   used/total: {}/ {}\n   write/read: {}/ {}\n\n",
@@ -241,15 +237,11 @@ impl App {
     }
 
     pub fn run(&mut self, mut terminal: Tui) -> anyhow::Result<()> {
-        
-        //let mut reader = EventStream::new();
-
         loop {
-            //let next = reader.next().fuse();
-            if event::poll(Duration::from_secs(1))? {
-                if let event::Event::Key(key) = event::read()? {
-                    handle_key(self, key)?;
-                }
+            if event::poll(Duration::from_secs(1))?
+                && let event::Event::Key(key) = event::read()?
+            {
+                handle_key(self, key)?;
             }
             self.flash()?;
             if self.exit {
@@ -280,14 +272,6 @@ pub struct Format {
     mem_line: Rc<LineGauge<'static>>,
     swap_line: Rc<LineGauge<'static>>,
     disk_text: String,
-}
-
-impl Format {
-    pub fn new() -> Format {
-        Format {
-            ..Default::default()
-        }
-    }
 }
 
 #[derive(Default)]
@@ -342,7 +326,9 @@ pub fn handle_key(main: &mut App, key: KeyEvent) -> anyhow::Result<()> {
                 main.extend.trend_sort = String::from("")
             }
         }
-        if key.code == KeyCode::Char('q') || (key.code == KeyCode::Char('c') && key.modifiers.contains(KeyModifiers::CONTROL)) {
+        if key.code == KeyCode::Char('q')
+            || (key.code == KeyCode::Char('c') && key.modifiers.contains(KeyModifiers::CONTROL))
+        {
             main.exit = true;
         }
     }
