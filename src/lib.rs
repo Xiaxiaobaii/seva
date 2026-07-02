@@ -1,7 +1,6 @@
 use std::{collections::HashMap, io, rc::Rc, time::Duration};
 
-use crossterm::event::{self, EventStream, KeyCode, KeyEvent, KeyEventKind, KeyModifiers};
-use futures::{FutureExt, StreamExt};
+use crossterm::event::{self, KeyCode, KeyEvent, KeyEventKind, KeyModifiers};
 use ratatui::{
     style::Style,
     symbols::{self, line::DOUBLE_VERTICAL, merge::MergeStrategy},
@@ -222,22 +221,18 @@ impl App {
         });
     }
 
-    pub async fn run(&mut self, mut terminal: Tui) -> anyhow::Result<()> {
-        let mut tick = tokio::time::interval(Duration::from_millis(1000));
-        let mut reader = EventStream::new();
+    pub fn run(&mut self, mut terminal: Tui) -> anyhow::Result<()> {
+        
+        //let mut reader = EventStream::new();
 
         loop {
-            let next = reader.next().fuse();
-            tokio::select! {
-                event = next => {
-                    if let Some(Ok(event::Event::Key(key))) = event {
-                        handle_key(self, key)?;
-                    }
+            //let next = reader.next().fuse();
+            if event::poll(Duration::from_secs(1))? {
+                if let event::Event::Key(key) = event::read()? {
+                    handle_key(self, key)?;
                 }
-                _ = tick.tick() => {
-                    self.flash()?;
-                }
-            };
+            }
+            self.flash()?;
             if self.exit {
                 break;
             }
