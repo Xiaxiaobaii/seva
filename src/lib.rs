@@ -28,7 +28,7 @@ pub mod client;
 pub mod sys;
 pub mod ui;
 
-const APP_VERSION: &'static str = "1.1.4-pre";
+const APP_VERSION: &'static str = "1.1.4";
 
 unsafe impl Send for App {}
 pub struct App {
