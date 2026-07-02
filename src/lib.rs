@@ -238,16 +238,10 @@ impl App {
 
     pub fn run(&mut self, mut terminal: Tui) -> anyhow::Result<()> {
         loop {
-            if event::poll(Duration::from_secs(1))?
-                && let event::Event::Key(key) = event::read()?
-            {
-                handle_key(self, key)?;
-            }
             self.flash()?;
             if self.exit {
                 break;
             }
-
             terminal.draw(|frame| {
                 let area = frame.area();
                 let buf = frame.buffer_mut();
@@ -256,6 +250,12 @@ impl App {
                     set_alert(area, buf, &err.to_string());
                 }
             })?;
+            if event::poll(Duration::from_secs(1))?
+                && let event::Event::Key(key) = event::read()?
+            {
+                handle_key(self, key)?;
+            }
+
         }
         ratatui::restore();
         terminal.show_cursor()?;
