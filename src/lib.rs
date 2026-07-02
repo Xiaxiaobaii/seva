@@ -105,13 +105,31 @@ impl App {
         if self.extend.space {
             return Ok(());
         }
-        self.extend.disks.iter_mut().for_each(|disk| {
-            disk.refresh();
-        });
-        self.network.refresh(true);
-        self.sys.refresh_cpu_all();
-        self.sys.refresh_memory();
-        self.merge_process();
+
+        match self.state {
+            ClientState::Main => {
+                self.sys.refresh_cpu_usage();
+                self.sys.refresh_memory();
+                self.network.refresh(true);
+                self.merge_process();
+            },
+            ClientState::Trend => {
+                self.sys.refresh_cpu_usage();
+                self.sys.refresh_memory();
+                self.merge_process();
+
+
+            },
+            ClientState::Info => {
+                self.sys.refresh_cpu_all();
+
+            },
+            ClientState::Serve => todo!(),
+        }
+        // self.extend.disks.iter_mut().for_each(|disk| {
+        //     disk.refresh();
+        // });
+
         self.sys_line.swap_data.force_queue(
             format!(
                 "{:.2}",
@@ -122,6 +140,7 @@ impl App {
         self.sys_line
             .cpu_data
             .force_queue(self.sys.global_cpu_usage().into());
+
         let us_memory = self.sys.used_memory() as f64;
         let to_memory = self.sys.total_memory() as f64;
         self.sys_line
