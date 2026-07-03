@@ -17,7 +17,7 @@ use crate::{
 pub type Tui = Terminal<ratatui::prelude::CrosstermBackend<io::Stdout>>;
 
 pub fn info_ui(app: &crate::App, area: ratatui::prelude::Rect, buf: &mut ratatui::prelude::Buffer) {
-    let (hello, product, cache_rect, cpu, disk, memory) = info_layout(area, buf);
+    let (hello, product, cache_rect, _cpu, disk, memory) = info_layout(area, buf);
 
     let cpubrand = app.sys.cpus()[0].brand();
     let dmi = decode_dmi();
@@ -73,36 +73,6 @@ pub fn info_ui(app: &crate::App, area: ratatui::prelude::Rect, buf: &mut ratatui
             .block(normal_block("cache"))
             .render(cache_rect, buf);
     }
-
-    let mut cpu_text = String::new();
-    let mut cpu_text_2 = String::new();
-    let mut cpu_iter = app.sys.cpus().iter();
-    let mut i = 0;
-    while let Some(cpu) = cpu_iter.next() {
-        if let Some(cpu2) = cpu_iter.next() {
-            cpu_text += &format!(
-                "cpu{:>2}:  {:>4}Mhz   cpu{:>2}:  {:>4}Mhz\n",
-                i,
-                cpu.frequency(),
-                i + 1,
-                cpu2.frequency()
-            );
-            cpu_text_2 += &format!(
-                "cpu{:>2}:  {:>5.2}%   cpu{:>2}:  {:>5.2}%\n",
-                i,
-                cpu.cpu_usage(),
-                i + 1,
-                cpu2.cpu_usage()
-            );
-            i += 2;
-        } else {
-            cpu_text += &format!("cpu{:>2}:  {:>4}Mhz", i, cpu.frequency());
-            cpu_text_2 += &format!("cpu{:>2}:  {:>5.2}%", i, cpu.cpu_usage());
-        }
-    }
-    Paragraph::new(format!("{cpu_text}\n{cpu_text_2}"))
-        .block(normal_block("cpu").merge_borders(MergeStrategy::Exact))
-        .render(cpu, buf);
 
     let disk_test = app
         .disks
