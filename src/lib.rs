@@ -13,11 +13,8 @@ use sysinfo::{
 
 use crate::{
     client::{
-        server::{self, Serve},
-        system::{Config, SystemLine, command_runs, from_osstring, sec_to_time},
-    },
-    sys::{Disk, take_sys_disk},
-    ui::build::{Tui, normal_block, set_alert},
+        server::{self, Serve}, system::{Config, FmtTime, SystemLine, command_runs, from_osstring},
+    }, sys::{Disk, take_sys_disk}, ui::build::{Tui, normal_block, set_alert},
 };
 use crate::{
     client::{stream::ClientState, system::HumanBytes},
@@ -84,7 +81,7 @@ impl App {
                 .unwrap_or("".to_string()),
             System::kernel_version().unwrap_or_default(),
             System::host_name().unwrap_or(String::from("linux")),
-            sec_to_time(System::uptime()),
+            FmtTime(System::uptime()),
             self.extend.package_text,
         );
 

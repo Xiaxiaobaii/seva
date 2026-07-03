@@ -1,6 +1,5 @@
 use std::{
-    ffi::{OsStr, OsString},
-    process::{Command, Stdio},
+    ffi::{OsStr, OsString}, process::{Command, Stdio},
 };
 
 use queue::Queue;
@@ -48,9 +47,9 @@ impl Default for SystemLine {
     }
 }
 
-pub struct HumanBytes<T: Copy + Into<u128>>(pub T);
+pub struct HumanBytes<T: Copy + Into<u64>>(pub T);
 
-impl<T: Copy + Into<u128>> std::fmt::Display for HumanBytes<T> {
+impl<T: Copy + Into<u64>> std::fmt::Display for HumanBytes<T> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         const UNITS: [&str; 7] = ["B", "KiB", "MiB", "GiB", "TiB", "PiB", "EiB"];
 
@@ -86,35 +85,36 @@ impl<T: Copy + Into<u128>> std::fmt::Display for DiskBytes<T> {
     }
 }
 
-pub fn sec_to_time(mut sec: u64) -> String {
-    let mut ider: u64 = 0;
-    let times = ["sec", "min", "hour", "day"];
-    let mut timelevel = 0;
-    loop {
-        if timelevel < 2 && sec >= 60 {
-            ider = sec % 60;
-            sec /= 60;
+pub struct FmtTime<T: Copy + Into<u64>>(pub T);
 
-            timelevel += 1;
-        } else if timelevel == 2 && sec >= 24 {
-            ider = sec % 24;
-            sec /= 24;
-            timelevel += 1;
-            break;
-        } else {
-            break;
+impl<T: Copy + Into<u64>> std::fmt::Display for FmtTime<T> {
+   fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        const UNITS: [&str; 3] = ["sec", "min", "hour"];
+        let time = self.0.into() as f64;
+        let i = (time.log(60.0) as usize).min(UNITS.len() - 1);
+        let size = time / 60_f64.powi(i as i32);
+        let pri;
+        match i {
+            2 => {
+                let day = (size / 24.0) as usize;
+                if day > 0 {
+                    pri = format!("{day}day{}hour", (size as usize) - day*24);
+                } else {
+                    let min = size % 1.0 * 60.0;
+                    pri = format!("{}hour{}min", size as usize, min as usize);
+                }   
+            }
+            1 => {
+                let sec = size % 1.0 * 60.0;
+                pri = format!("{}min{}sec", size as usize, sec as usize);
+            }
+            0 => {
+                pri = format!("{}sec", size as usize);
+            }
+            _ => todo!()
         }
-    }
-    if timelevel == 0 {
-        return format!("{}{}", sec, times[timelevel]);
-    }
-    format!(
-        "{}{}{}{}",
-        sec,
-        times[timelevel],
-        ider,
-        times[timelevel - 1]
-    )
+        f.pad(&pri)
+   } 
 }
 
 pub fn from_osstring(cmd: &[OsString]) -> String {

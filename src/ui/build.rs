@@ -14,10 +14,7 @@ use std::{io, ops::Deref, vec};
 use sysinfo::{Motherboard, System};
 
 use crate::{
-    App,
-    client::system::{DiskBytes, HumanBytes, command_runs, sec_to_time},
-    sys::{ModernDmiDecodedData, decode_dmi},
-    ui::layout::{info_layout, main_layout, trend_layout},
+    App, client::system::{DiskBytes, FmtTime, HumanBytes, command_runs}, sys::{ModernDmiDecodedData, decode_dmi}, ui::layout::{info_layout, main_layout, trend_layout},
 };
 
 pub type Tui = Terminal<ratatui::prelude::CrosstermBackend<io::Stdout>>;
@@ -227,7 +224,7 @@ pub fn trend_ui(
             process.pid.as_u32(),
             format!("{:.2}%", process.cpu_usage),
             HumanBytes(process.memory),
-            sec_to_time(process.run_time),
+            FmtTime(process.run_time),
             process.cmd
         )
     });
@@ -315,7 +312,7 @@ pub fn long_process(app: &App) -> (Paragraph<'static>, List<'static>) {
             process.pid.as_u32(),
             format!("{:.2}%", process.cpu_usage),
             HumanBytes(process.memory),
-            sec_to_time(process.run_time),
+            FmtTime(process.run_time),
             process.cmd
         )
     });
