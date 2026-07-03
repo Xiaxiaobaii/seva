@@ -285,7 +285,7 @@ pub fn render_logo(area: Rect, buf: &mut Buffer) {
         for (x, glyph) in line.iter().enumerate() {
             let x = area.left() + x as u16 + 1;
             let y = area.top() + y as u16 + 2;
-            let cell: &mut ratatui::buffer::Cell = &mut buf[(x, y)];
+            let cell = &mut buf[(x, y)];
             cell.set_fg(glyph.color);
             cell.set_char(glyph.char);
         }

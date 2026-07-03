@@ -13,8 +13,11 @@ use sysinfo::{
 
 use crate::{
     client::{
-        server::{self, Serve}, system::{Config, FmtTime, SystemLine, command_runs, from_osstring},
-    }, sys::{Disk, take_sys_disk}, ui::build::{Tui, normal_block, set_alert},
+        server::{self, Serve},
+        system::{Config, FmtTime, SystemLine, command_runs, from_osstring},
+    },
+    sys::{Disk, take_sys_disk},
+    ui::build::{Tui, normal_block, set_alert},
 };
 use crate::{
     client::{stream::ClientState, system::HumanBytes},
@@ -25,7 +28,7 @@ pub mod client;
 pub mod sys;
 pub mod ui;
 
-const APP_VERSION: &str = "1.1.5-pre";
+const APP_VERSION: &str = "1.1.6-pre";
 
 unsafe impl Send for App {}
 pub struct App {
@@ -113,12 +116,11 @@ impl App {
                 self.merge_process();
             }
             ClientState::Trend => {
-                self.sys.refresh_cpu_usage();
+                self.sys.refresh_cpu_all();
                 self.sys.refresh_memory();
                 self.merge_process();
             }
             ClientState::Info => {
-                self.sys.refresh_cpu_all();
             }
             ClientState::Serve => todo!(),
         }
@@ -186,6 +188,7 @@ impl App {
 
     pub fn merge_ui(&mut self) {
         let blue_style = Style::new().blue().on_black().bold();
+
         self.formats.cpu_line = Rc::new(
             LineGauge::default()
                 .block(normal_block("cpu").merge_borders(MergeStrategy::Exact))
@@ -252,7 +255,6 @@ impl App {
             {
                 handle_key(self, key)?;
             }
-
         }
         ratatui::restore();
         terminal.show_cursor()?;

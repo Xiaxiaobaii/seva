@@ -1,5 +1,6 @@
 use std::{
-    ffi::{OsStr, OsString}, process::{Command, Stdio},
+    ffi::{OsStr, OsString},
+    process::{Command, Stdio},
 };
 
 use queue::Queue;
@@ -88,7 +89,7 @@ impl<T: Copy + Into<u128>> std::fmt::Display for DiskBytes<T> {
 pub struct FmtTime<T: Copy + Into<u64>>(pub T);
 
 impl<T: Copy + Into<u64>> std::fmt::Display for FmtTime<T> {
-   fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         const UNITS: [&str; 3] = ["sec", "min", "hour"];
         let time = self.0.into() as f64;
         let i = (time.log(60.0) as usize).min(UNITS.len() - 1);
@@ -98,11 +99,11 @@ impl<T: Copy + Into<u64>> std::fmt::Display for FmtTime<T> {
             2 => {
                 let day = (size / 24.0) as usize;
                 if day > 0 {
-                    pri = format!("{day}day{}hour", (size as usize) - day*24);
+                    pri = format!("{day}day{}hour", (size as usize) - day * 24);
                 } else {
                     let min = size % 1.0 * 60.0;
                     pri = format!("{}hour{}min", size as usize, min as usize);
-                }   
+                }
             }
             1 => {
                 let sec = size % 1.0 * 60.0;
@@ -111,10 +112,10 @@ impl<T: Copy + Into<u64>> std::fmt::Display for FmtTime<T> {
             0 => {
                 pri = format!("{}sec", size as usize);
             }
-            _ => todo!()
+            _ => todo!(),
         }
         f.pad(&pri)
-   } 
+    }
 }
 
 pub fn from_osstring(cmd: &[OsString]) -> String {

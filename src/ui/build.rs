@@ -1,20 +1,17 @@
 use queue::Queue;
 use ratatui::{
-    Terminal,
-    buffer::Buffer,
-    layout::{Constraint, Flex, Layout, Rect, Spacing},
-    style::{Color, Style, Stylize},
-    symbols::{Marker, border, merge::MergeStrategy},
-    text::Text,
-    widgets::{
-        Axis, Block, Chart, Clear, Dataset, GraphType, List, Padding, Paragraph, Widget, Wrap,
+    Terminal, buffer::Buffer, layout::{Constraint, Flex, Layout, Margin, Rect, Spacing}, style::{Style}, symbols::{Marker, border, line::{VERTICAL}, merge::MergeStrategy}, text::{Line}, widgets::{
+        Axis, Block, Chart, Clear, Dataset, GraphType, LineGauge, List, Padding, Paragraph, Widget, Wrap,
     },
 };
 use std::{io, ops::Deref, vec};
 use sysinfo::{Motherboard, System};
 
 use crate::{
-    App, client::system::{DiskBytes, FmtTime, HumanBytes, command_runs}, sys::{ModernDmiDecodedData, decode_dmi}, ui::layout::{info_layout, main_layout, trend_layout},
+    App,
+    client::system::{DiskBytes, FmtTime, HumanBytes, command_runs},
+    sys::{ModernDmiDecodedData, decode_dmi},
+    ui::layout::{info_layout, main_layout, trend_layout},
 };
 
 pub type Tui = Terminal<ratatui::prelude::CrosstermBackend<io::Stdout>>;
@@ -177,12 +174,28 @@ pub fn info_ui(app: &crate::App, area: ratatui::prelude::Rect, buf: &mut ratatui
         .render(memory, buf);
 }
 
+fn once_cpu(id: i32, usage: f32, area: Rect, buf: &mut Buffer) {
+    LineGauge::default()
+        .filled_style(Style::new().blue().on_black().bold())
+        .filled_symbol(VERTICAL)
+        .unfilled_symbol(VERTICAL)
+        .label(Line::default())
+        .ratio(usage as f64 / 100.0)
+        .render(area, buf);
+    Paragraph::new(format!(
+        "cpu{id} {:.2}%",
+        usage
+    ))
+    .alignment(ratatui::layout::HorizontalAlignment::Right)
+    .render(area, buf);
+}
+
 pub fn trend_ui(
     app: &crate::App,
     area: ratatui::prelude::Rect,
     buf: &mut ratatui::prelude::Buffer,
 ) {
-    let (trend, disk, process) = trend_layout(area, buf);
+    let (trend, mut disk, process) = trend_layout(area, buf);
 
     let pc = PercentageChart::set(
         String::from("trend"),
@@ -198,19 +211,43 @@ pub fn trend_ui(
         ],
         vec![
             Style::new().red(),
-            Style::new().green(),
+            Style::new().green(), 
             Style::new().cyan(),
         ],
     );
     pc.build(trend, buf);
 
-    let item1 = Text::from(app.formats.disk_text.as_str())
-        .centered()
-        .bg(Color::White)
-        .fg(Color::White);
-    List::new(item1)
-        .block(normal_block("Disk"))
-        .render(disk, buf);
+    normal_block("").render(disk, buf);
+    let margin = Margin::new(1, 1);
+    disk = disk.inner(margin);
+
+    let mut cpu_iter = app.sys.cpus().iter();
+
+    let mut disks: [Rect; 3] = Layout::horizontal([Constraint::Fill(1), Constraint::Fill(1), Constraint::Fill(1)]).areas(disk);
+    
+    let mut cursor = 0;
+    let mut i = 1;
+    
+    while let Some(cpu) = cpu_iter.next() {
+        if cursor == disks.len() {
+            cursor = 0;
+        }
+        let disk = disks.get_mut(cursor).unwrap();
+        let [disk_c, disk_f] = Layout::vertical([Constraint::Length(2), Constraint::Fill(1)]).areas(*disk);
+        once_cpu(i, cpu.cpu_usage(), disk_c, buf);
+        *disk = disk_f;
+        cursor+=1;
+        i+=1;
+
+    }
+
+    // let item1 = Text::from(app.formats.disk_text.as_str())
+    //     .centered()
+    //     .bg(Color::White)
+    //     .fg(Color::White);
+    // List::new(item1)
+    //     .block(normal_block("Disk"))
+    //     .render(disk, buf);
 
     let [process_top, process] =
         Layout::vertical([Constraint::Length(1), Constraint::Min(5)]).areas(process);
