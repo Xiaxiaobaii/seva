@@ -367,8 +367,15 @@ pub fn take_sys_disk() -> anyhow::Result<Vec<Disk>> {
                         &["lspci", "-s", ctrl.address().unwrap_or_default(), "-vvv"],
                         &["grep", "-E", "LnkSta:"],
                     ])
-                    .map(|e| e.trim().split(":").last().unwrap_or_default().to_string())
-                    .ok();
+                    .ok()
+                    .and_then(|e| {
+                        let e = e.trim().split(":").last().unwrap_or_default().to_string();
+                        if e.is_empty() {
+                            None
+                        } else {
+                            Some(e)
+                        }
+                    });
                 let mut disk_size: u64 = 0;
                 for ns in ctrl.namespaces() {
                     disk_size += ns.size_bytes();
