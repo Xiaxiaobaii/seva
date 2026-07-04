@@ -244,7 +244,21 @@ pub fn trend_ui(
 }
 
 pub fn main_ui(app: &crate::App, area: ratatui::prelude::Rect, buf: &mut ratatui::prelude::Buffer) {
-    let (tabs, line, os, network, process) = main_layout(area, buf);
+    let mut items: Vec<String> = vec![];
+    for (pid, item) in &app.network {
+        items.push(format!(
+            "{}: {:<5} (Down) / {:<5} (Up)",
+            pid,
+            HumanBytes(item.total_received()),
+            HumanBytes(item.total_transmitted())
+        ));
+    }
+
+    let (tabs, line, os, network, process) = main_layout(area, buf, items.len(), app.formats.os_message_format.lines().collect::<Vec<&str>>().len()+2);
+
+    List::new(items)
+        .block(normal_block("network"))
+        .render(network, buf);
 
     app.formats.tab.deref().render(tabs, buf);
 
@@ -291,19 +305,7 @@ pub fn main_ui(app: &crate::App, area: ratatui::prelude::Rect, buf: &mut ratatui
         .block(normal_block("os"))
         .render(os, buf);
 
-    let mut items: Vec<String> = vec![];
-    for (pid, item) in &app.network {
-        items.push(format!(
-            "{}: {:<5} (Down) / {:<5} (Up)",
-            pid,
-            HumanBytes(item.total_received()),
-            HumanBytes(item.total_transmitted())
-        ));
-    }
 
-    List::new(items)
-        .block(normal_block("network"))
-        .render(network, buf);
 
     let (a, b) = if buf.area.as_size().height > 25 {
         short_process(app)
