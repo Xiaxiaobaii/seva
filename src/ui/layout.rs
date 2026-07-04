@@ -50,29 +50,23 @@ pub fn trend_layout(area: Rect, _buf: &mut ratatui::prelude::Buffer) -> (Rect, R
 pub fn info_layout(
     area: Rect,
     _buf: &mut ratatui::prelude::Buffer,
-) -> (Rect, Rect, Rect, Rect, Rect, Rect) {
+    cache_size: usize,
+) -> (Rect, Rect, Rect, Rect, Rect) {
     let [hello, area] = Layout::vertical([Constraint::Length(3), Constraint::Fill(1)]).areas(area);
     let [hello, _] = Layout::horizontal([Constraint::Fill(1), Constraint::Fill(3)]).areas(hello);
-    let [motherboard, cpu, memory] = Layout::horizontal([
-        Constraint::Fill(1),
-        Constraint::Fill(1),
-        Constraint::Fill(1),
+    let [motherboard, disk_memory] = Layout::horizontal([
+        Constraint::Fill(2),
+        Constraint::Fill(3),
     ])
     .areas(area);
 
-    let [disk_space, _empty] =
-        Layout::horizontal([Constraint::Fill(2), Constraint::Fill(1)]).areas(area);
-    let [_empty, disk] = Layout::vertical([Constraint::Percentage(70), Constraint::Percentage(30)])
-        .areas(disk_space);
-
-    let [product_cache, _empty] =
-        Layout::vertical([Constraint::Percentage(70), Constraint::Percentage(30)])
-            .areas(motherboard);
     let [product, cache] =
-        Layout::vertical([Constraint::Percentage(70), Constraint::Percentage(30)])
-            .areas(product_cache);
+        Layout::vertical([Constraint::Fill(1), Constraint::Length(cache_size as u16+2)])
+            .areas(motherboard);
 
-    let [cpu, _empty] =
-        Layout::vertical([Constraint::Percentage(70), Constraint::Percentage(30)]).areas(cpu);
-    (hello, product, cache, cpu, disk, memory)
+    let [memory, disk] =
+        Layout::vertical([Constraint::Fill(1), Constraint::Fill(1)]).areas(disk_memory);
+
+
+    (hello, product, cache, disk, memory)
 }

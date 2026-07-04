@@ -17,7 +17,14 @@ use crate::{
 pub type Tui = Terminal<ratatui::prelude::CrosstermBackend<io::Stdout>>;
 
 pub fn info_ui(app: &crate::App, area: ratatui::prelude::Rect, buf: &mut ratatui::prelude::Buffer) {
-    let (hello, product, cache_rect, _cpu, disk, memory) = info_layout(area, buf);
+    let cache;
+    if let Ok(c) = command_runs(&[&["lscpu"], &["grep", "^L"]]) {
+        cache = c.replace(" ", "");
+    } else {
+        cache = String::from("无法获取缓存信息");
+    }
+
+    let (hello, product, cache_rect, disk, memory) = info_layout(area, buf, cache.lines().collect::<Vec<&str>>().len());
 
     let cpubrand = app.sys.cpus()[0].brand();
     let dmi = decode_dmi();
@@ -39,12 +46,7 @@ pub fn info_ui(app: &crate::App, area: ratatui::prelude::Rect, buf: &mut ratatui
             cpubrand,
             app.sys.cpus().len()
         );
-        let cache;
-        if let Ok(c) = command_runs(&[&["lscpu"], &["grep", "^L"]]) {
-            cache = c.replace(" ", "");
-        } else {
-            cache = String::from("无法获取缓存信息");
-        }
+
         if let Ok(dmi) = dmi.as_ref() {
             text = format!(
                 "product name: {}\nserial number: {}\ncpu name: {}\ncpu logic number: {}\n",
