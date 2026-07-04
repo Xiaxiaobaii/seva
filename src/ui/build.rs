@@ -134,8 +134,8 @@ pub fn info_ui(app: &crate::App, area: ratatui::prelude::Rect, buf: &mut ratatui
     if let Ok(memory) = dmi.map(|dmi| dmi.memory) {
         let mut i = 0;
         memory.devices.iter().for_each(|x| {
-            mem_text += &format!("slot{i}: \n  内存类型: {:?}\n  内存大小: {}\n  内存型号: {}\n  内存技术: {:?}\n  内存制造商: {}\n  内存速度: {}MT/s\n  内存配置速度: {}MT/s\n  内存最小电压: {}mV\n  内存最大电压: {}mV\n  内存配置电压: {}mV\n",
-            x.memory_type, HumanBytes(x.size), x.part_number, x.trchnology, x.manufacturer, x.max_speed, x.configured_speed, x.min_voltage, x.max_voltage, x.configured_voltage);
+            mem_text += &format!("slot{i}: {}({}-{}) {:?}\n  from {} R/S: {}|{}MT/s\n  VM/VA: {}|{}mV VS: {}mV\n",
+            if x.part_number.is_empty() { "Unknown Part" } else { &x.part_number }, format!("{:?}", x.memory_type).to_uppercase(), HumanBytes(x.size), x.trchnology, x.manufacturer, x.max_speed, x.configured_speed, x.min_voltage, x.max_voltage, x.configured_voltage);
             i += 1;
         });
     } else {
